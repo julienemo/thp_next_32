@@ -10,12 +10,19 @@ class Board {
     }
   }
 
+  getEmptyCases = () => {
+    let list = [];
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 3; j++) {
+        if (this.game.board.map[i][j] === EMPTY) {
+          list.push([i, j]);
+        }
+      }
+    }
+    return list;
+  };
+
   fillGrid = (x, y, content) => {
-    console.log(x);
-    console.log(this.map[x]);
-    console.log(
-      `cell ${x} ${y} clicked, current value ${this.map[x][y]} vs ${content}`
-    );
     if (this.map[x][y] !== EMPTY && content !== EMPTY) {
       return false;
     } else {
@@ -29,11 +36,6 @@ class Board {
   }
 
   checkTwo = (a, b, c) => {
-    console.log(
-      `a${this.map[a[0]][a[1]]} b${this.map[b[0]][b[1]]} c${
-        this.map[c[0]][c[1]]
-      }`
-    );
     let case1 =
       this.map[a[0]][a[1]] === this.map[b[0]][b[1]] &&
       this.map[b[0]][b[1]] === YOU &&
@@ -43,18 +45,33 @@ class Board {
       this.map[c[0]][c[1]] === YOU &&
       this.map[a[0]][a[1]] === EMPTY;
     if (case1) {
-      console.log("tail");
       return c;
     }
     if (case2) {
-      console.log("head");
       return a;
     } else {
-      console.log("nothing");
       return null;
     }
   };
 
+  getPossibleCuttingMoves = () => {
+    let list = [];
+    for (let i = 0; i < 3; i++) {
+      if (this.checkTwo([i, 0], [i, 1], [i, 2])) {
+        list.push(this.checkTwo([i, 0], [i, 1], [i, 2]));
+      }
+      if (this.checkTwo([0, i], [1, i], [2, i])) {
+        list.push(this.checkTwo([0, i], [1, i], [2, i]));
+      }
+    }
+    if (this.checkTwo([0, 0], [1, 1], [2, 2])) {
+      list.push(this.checkTwo([0, 0], [1, 1], [2, 2]));
+    }
+    if (this.checkTwo([2, 0], [1, 1], [0, 2])) {
+      list.push(this.checkTwo([2, 0], [1, 1], [0, 2]));
+    }
+    return list;
+  };
   checkWinner() {
     let winner = null;
     for (let i = 0; i < 3; i++) {

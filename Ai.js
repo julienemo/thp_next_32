@@ -52,52 +52,18 @@ class Ai {
     };
   };
 
-  play = () => {
-    if (this.game.finish) return;
-
+  play = (emptyCases, possibleCuttingMoves) => {
     let move;
-    let emptyCases = [];
-    for (let i = 0; i < 3; i++) {
-      for (let j = 0; j < 3; j++) {
-        if (this.game.board.map[i][j] === EMPTY) {
-          emptyCases.push([i, j]);
-        }
-      }
-    }
 
     if (this.level === EASY) {
-      move = this.goRandom(emptyCases);
+      return this.goRandom(emptyCases);
     }
 
     if (this.level === MEDIUM) {
-      let possibleCuttingMoves = [];
-      for (let i = 0; i < 3; i++) {
-        if (this.game.board.checkTwo([i, 0], [i, 1], [i, 2])) {
-          possibleCuttingMoves.push(
-            this.game.board.checkTwo([i, 0], [i, 1], [i, 2])
-          );
-        }
-        if (this.game.board.checkTwo([0, i], [1, i], [2, i])) {
-          possibleCuttingMoves.push(
-            this.game.board.checkTwo([0, i], [1, i], [2, i])
-          );
-        }
-      }
-      if (this.game.board.checkTwo([0, 0], [1, 1], [2, 2])) {
-        possibleCuttingMoves.push(
-          this.game.board.checkTwo([0, 0], [1, 1], [2, 2])
-        );
-      }
-      if (this.game.board.checkTwo([2, 0], [1, 1], [0, 2])) {
-        possibleCuttingMoves.push(
-          this.game.board.checkTwo([2, 0], [1, 1], [0, 2])
-        );
-      }
-      console.log("possible cutting moves = " + possibleCuttingMoves);
       if (possibleCuttingMoves.length > 0) {
-        move = this.goRandom(possibleCuttingMoves);
+        return this.goRandom(possibleCuttingMoves);
       } else {
-        move = this.goRandom(emptyCases);
+        return this.goRandom(emptyCases);
       }
     }
 
@@ -117,8 +83,7 @@ class Ai {
           }
         });
       }
+      return move;
     }
-    console.log("in ai move = " + JSON.stringify(move));
-    return move;
   };
 }
