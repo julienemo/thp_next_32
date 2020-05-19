@@ -1,183 +1,214 @@
 class Morpion {
-	constructor(player) {
-		this.player = player;
-		this.ia = (player == "J1") ? "J2" : "J1";
-		this.map = [];
-		for (let i = 0; i < 3; i++) {
-			this.map[i] = [];
-			for (let j = 0; j < 3; j++) {
-				this.map[i][j] = "EMPTY";
-				document.getElementById(this.getZone(i, j)).onclick = () => this.playerTurn(i, j);
-			}
-		}
-		this.finish = false;
-		if (this.ia === "J1")
-			this.iaTurn();
-	}
+  constructor(level = EASY, { board } = {}) {
+    this.board = new Board(this, board);
+    this.level = level;
 
-	getZone = (x, y) => {
-		if (y == 0)
-			return 'A' + (x + 1);
-		else if (y == 1)
-			return 'B' + (x + 1);
-		else
-			return 'C' + (x + 1);
-	}
+    this.turn = 0;
+    this.winner = null;
+    this.winZone = document.getElementById("win");
 
-	checkDraw = () => {
-		for (let x = 0; x < 3; x++) {
-			for (let y = 0; y < 3; y++) {
-				if (this.map[x][y] === "EMPTY")
-					return false;
-			}
-		}
-		return true;
-	}
+    this.showGraphic();
+    this.addEvents();
 
-	fillGrid = (x, y, player) => {
-		const image = (player == this.player) ? 'croix' : 'rond';
-		const zone = this.getZone(x, y);
+    if (this.level === HARD && board === undefined) {
+      this.iaTurn();
+    }
+  }
 
-		if (this.map[x][y] != "EMPTY")
-			return false;
-		this.map[x][y] = player;
-		document.getElementById(zone).style.backgroundImage = `url(image-morpion/${image}.png)`;
-		document.getElementById(zone).className += " filled";
-		this.checking(player);
-		return true;
-	}
+  getZone = (x, y) => {
+    return document.getElementById(`cell_${x}${y}`);
+  };
 
-	checking = (player) => {
-		const one = this.map[0][0];
-		const two = this.map[0][1];
-		const three = this.map[0][2];
-		const four = this.map[1][0];
-		const five = this.map[1][1];
-		const six = this.map[1][2];
-		const seven = this.map[2][0];
-		const eight = this.map[2][1];
-		const nine = this.map[2][2];
-		if (one === two && one === three && one != "EMPTY" ||
-			four === five && four === six && four != "EMPTY" ||
-			seven === eight && seven === nine && seven != "EMPTY" ||
-			one === five && one === nine && one != "EMPTY" ||
-			three === five && three === seven && three != "EMPTY" ||
-			one === four && one === seven && one != "EMPTY" ||
-			two === five && two === eight && two != "EMPTY" ||
-			three === six && three === nine && three != "EMPTY") {
-			this.finish = true;
-			if (player == this.ia) {
-				document.getElementById('win').textContent = 'L\'IA a gagné !';
-			} else if (player == this.player) {
-				document.getElementById('win').textContent = 'Tu as battu l\'IA !';
-			}
-		}
-		else if (this.checkDraw()) {
-			document.getElementById('win').textContent = "Vous êtes à égalité";
-			this.finish = true;
-		}
-	}
+  showGraphic = () => {
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 3; j++) {
+        this.getZone(
+          i,
+          j
+        ).style.backgroundImage = `url(image-morpion/${this.board.map[i][j]}.png)`;
+      }
+    }
+  };
 
-	winningLine(a, b, c) {
-		return a == b && b == c && a != "EMPTY";
-	}
+  addEvents = () => {
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 3; j++) {
+        this.getZone(i, j).addEventListener("click", () => {
+          this.playerTurn(i, j);
+        });
+      }
+    }
+  };
 
-	checkWinner() {
-		let winner = null;
-		for (let i = 0; i < 3; i++) {
-			if (this.winningLine(this.map[i][0], this.map[i][1], this.map[i][2])) {
-				winner = this.map[i][0];
-			}
-			if (this.winningLine(this.map[0][i], this.map[1][i], this.map[2][i])) {
-				winner = this.map[0][i];
-			}
-		}
-		if (this.winningLine(this.map[0][0], this.map[1][1], this.map[2][2])) {
-			winner = this.map[0][0];
-		}
-		if (this.winningLine(this.map[2][0], this.map[1][1], this.map[0][2])) {
-			winner = this.map[2][0];
-		}
-		if (winner == null && this.turn == 9) {
-			return "draw";
-		} else {
-			return winner;
-		}
-	}
+  removeEvents = () => {
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 3; j++) {
+        var old_element = this.getZone(i, j);
+        var new_element = old_element.cloneNode(true);
+        old_element.parentNode.replaceChild(new_element, old_element);
+      }
+    }
+  };
 
-	playerTurn = (x, y) => {
-		if (this.finish)
-			return;
-		if (!this.fillGrid(x, y, this.player))
-			return alert('La case n\'est pas vide');
-		else if (!this.finish)
-			this.iaTurn();
-	}
+  showGameEndIndication = () => {
+    if (this.winner === null) return;
+    this.finish = true;
+    this.removeEvents();
+    if (this.winner === DRAW) {
+      this.winZone.textContent = DrawIndication;
+    } else {
+      this.winZone.textContent = `${this.winner} won!`;
+    }
+  };
 
-	minimax = (board, depth, isMaximizing) => {
-		let result = this.checkWinner();
-		if (result == this.ia) return 10 - depth;
-		else if (result == this.player) return depth - 10;
-		else if (result != null) return depth;
+  fillCheckDisplay = (x, y, player) => {
+    if (this.board.fillGrid(x, y, player) === false) {
+      alert("Cell occupied");
+      return;
+    } else {
+      console.log("filling goes on normally");
+      this.turn += player === EMPTY ? -1 : 1;
+      this.winner = this.board.checkWinner();
+      this.showGraphic();
+      this.showGameEndIndication();
+      return true;
+    }
+  };
 
-		if (isMaximizing) {
-			let bestScore = -Infinity;
-			for (let i = 0; i < 3; i++) {
-				for (let j = 0; j < 3; j++) {
-					if (board[i][j] == "EMPTY") {
-						board[i][j] = this.ia;
-						this.turn++;
-						let score = this.minimax(board, depth + 1, false);
-						board[i][j] = "EMPTY";
-						this.turn--;
-						if (score > bestScore) {
-							bestScore = score;
-						}
-					}
-				}
-			}
-			return bestScore;
-		} else {
-			let bestScore = Infinity;
-			for (let i = 0; i < 3; i++) {
-				for (let j = 0; j < 3; j++) {
-					if (board[i][j] == "EMPTY") {
-						board[i][j] = this.player;
-						this.turn++;
-						let score = this.minimax(board, depth + 1, true);
-						board[i][j] = "EMPTY";
-						this.turn--;
-						if (score < bestScore) {
-							bestScore = score;
-						}
-					}
-				}
-			}
-			return bestScore;
-		}
-	}
+  playerTurn = (x, y) => {
+    if (this.finish) return;
+    if (this.fillCheckDisplay(x, y, YOU)) {
+      this.iaTurn();
+    }
+  };
 
-	iaTurn = () => {
-		let depth = 0;
-		let bestScore = -Infinity;
-		let move;
-		for (let i = 0; i < 3; i++) {
-			for (let j = 0; j < 3; j++) {
-				if (this.map[i][j] == "EMPTY") {
-					this.map[i][j] = this.ia;
-					this.turn++;
-					let score = this.minimax(this.map, depth + 1, false);
-					this.map[i][j] = "EMPTY";
-					this.turn--;
-					if (score > bestScore) {
-						bestScore = score;
-						move = { i, j };
-					}
-				}
-			}
-		}
-		this.fillGrid(move.i, move.j, this.ia);
-	};
+  minimax = (board, depth, isMaximizing) => {
+    let result = this.board.checkWinner();
+    if (result == AI) return 10 - depth;
+    else if (result === YOU) return depth - 10;
+    else if (result != null) return depth;
+
+    if (isMaximizing) {
+      let bestScore = -Infinity;
+      for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
+          if (board[i][j] == EMPTY) {
+            board[i][j] = AI;
+            this.turn++;
+            let score = this.minimax(board, depth + 1, false);
+            board[i][j] = EMPTY;
+            this.turn--;
+            if (score > bestScore) {
+              bestScore = score;
+            }
+          }
+        }
+      }
+      return bestScore;
+    } else {
+      let bestScore = Infinity;
+      for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
+          if (board[i][j] == EMPTY) {
+            board[i][j] = YOU;
+            this.turn++;
+            let score = this.minimax(board, depth + 1, true);
+            board[i][j] = EMPTY;
+            this.turn--;
+            if (score < bestScore) {
+              bestScore = score;
+            }
+          }
+        }
+      }
+      return bestScore;
+    }
+  };
+
+  iaTurn = () => {
+    console.log("in aiTurn" + this.turn);
+    if (this.finish) return;
+
+    let move;
+    let emptyCases = [];
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 3; j++) {
+        if (this.board.map[i][j] === EMPTY) {
+          emptyCases.push({ x: i, y: j });
+        }
+      }
+    }
+
+    const goRandom = () => {
+      let position = generateRandomZeroUpTo(emptyCases.length);
+      let randomMove = emptyCases[position];
+      console.log(randomMove);
+      return {
+        i: randomMove.x,
+        j: randomMove.y,
+      };
+    };
+
+    if (this.level === EASY) {
+      console.log("ai in easy");
+      move = goRandom();
+    }
+
+    if (this.level === MEDIUM) {
+      let possibleCuttingMoves = [];
+      for (let i = 0; i < 3; i++) {
+        if (this.board.checkTwo([i, 0], [i, 1], [i, 2])) {
+          possibleCuttingMoves.push(
+            this.board.checkTwo([i, 0], [i, 1], [i, 2])
+          );
+        }
+        if (this.board.checkTwo([0, i], [1, i], [2, i])) {
+          possibleCuttingMoves.push(
+            this.board.checkTwo([0, i], [1, i], [2, i])
+          );
+        }
+      }
+      if (this.board.checkTwo([0, 0], [1, 1], [2, 2])) {
+        possibleCuttingMoves.push(this.board.checkTwo([0, 0], [1, 1], [2, 2]));
+      }
+      if (this.board.checkTwo([2, 0], [1, 1], [0, 2])) {
+        possibleCuttingMoves.push(this.board.checkTwo([2, 0], [1, 1], [0, 2]));
+      }
+      if (possibleCuttingMoves.length > 0) {
+        let randomPosition = generateRandomZeroUpTo(
+          possibleCuttingMoves.length
+        );
+        let randomMove = possibleCuttingMoves[randomPosition];
+        move = {
+          i: randomMove[0],
+          j: randomMove[1],
+        };
+      } else {
+        move = goRandom();
+      }
+    }
+    if (this.level === HARD) {
+      if (this.board.map[1][1] === EMPTY) {
+        move = { i: 1, j: 1 };
+      } else {
+        let depth = 0;
+        let bestScore = -Infinity;
+        emptyCases.forEach((emptyCase) => {
+          this.board.map[emptyCase.x][emptyCase.y] = AI;
+          this.turn++;
+          let score = this.minimax(this.board.map, depth + 1, false);
+          this.board.map[emptyCase.x][emptyCase.y] = EMPTY;
+          this.turn--;
+          if (score > bestScore) {
+            bestScore = score;
+            move = { i: emptyCase.x, j: emptyCase.y };
+          }
+        });
+      }
+    }
+
+    this.fillCheckDisplay(move.i, move.j, AI);
+  };
 }
 
-const morpion = new Morpion("J2");
+const morpion = new Morpion(MEDIUM);
