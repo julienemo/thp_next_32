@@ -11,6 +11,8 @@ class Board {
   }
 
   fillGrid = (x, y, content) => {
+    console.log(x);
+    console.log(this.map[x]);
     console.log(
       `cell ${x} ${y} clicked, current value ${this.map[x][y]} vs ${content}`
     );
