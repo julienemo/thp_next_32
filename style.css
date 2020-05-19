@@ -90,7 +90,8 @@ table {
 }
 
 #reset_zone,
-#undo_redo_zone {
+#undo_zone,
+#level_btn_zone {
   margin: 2rem 0;
   display: flex;
   flex-flow: row wrap;

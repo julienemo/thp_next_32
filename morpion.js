@@ -1,11 +1,13 @@
 class Morpion {
-  constructor(level = EASY, { board, turn, winner, finish } = {}) {
+  constructor({ level, board, turn, winner, finish, momento } = {}) {
     this.board = new Board(this, board);
-    this.view = new View(this, winner, finish, this.undo, this.redo);
     this.ai = new Ai(level, this);
+    this.momento = new Momento({ momento });
     this.turn = turn || 0;
     this.winner = winner || null;
     this.finish = finish || false;
+    this.view = new View(this);
+
     if (this.ai.level === HARD && board === undefined) {
       this.iaTurn();
     }
@@ -20,33 +22,56 @@ class Morpion {
         finish: this.finish,
         turn: this.turn,
         level: this.ai.level,
+        momento: {
+          playerHistory: this.momento.playerHistory,
+          AiHistory: this.momento.AiHistory,
+          playerLastStep: this.momento.playerLastStep,
+        },
       })
     );
   };
 
   reset = () => {
-    console.log("reset triggered");
     localStorage.removeItem(GameStatusKey);
     location.reload();
   };
 
-  fillCheckDisplay = (x, y, player) => {
-    if (this.board.fillGrid(x, y, player) === false) {
-      alert("Cell occupied");
-      return;
-    }
+  changeLevel = (level) => {
+    this.ai.level = level.toLowerCase();
+  };
 
-    this.turn += player === EMPTY ? -1 : 1;
+  afterMove = () => {
+    this.view.showTurn(this.turn);
     this.winner = this.board.checkWinner();
     this.winner && (this.finish = true);
     this.view.showGraphic(this.board.map, this.finish, this.winner);
     this.saveGame();
+  };
+
+  undoStep = () => {
+    let playerLast = this.momento.playerLastStep;
+    let AiLast = this.momento.AiLastStep;
+    this.board.fillGrid(playerLast[0], playerLast[1], EMPTY);
+    this.board.fillGrid(AiLast[0], AiLast[1], EMPTY);
+    this.turn -= 2;
+    this.momento.undo();
+    this.afterMove();
+  };
+
+  doStep = (x, y, player) => {
+    if (this.board.fillGrid(x, y, player) === false) {
+      alert("Cell occupied");
+      return;
+    }
+    this.turn += 1;
+    this.momento.addHistory(x, y, player);
+    this.afterMove();
     return true;
   };
 
   playerTurn = (x, y) => {
     if (this.finish) return;
-    this.fillCheckDisplay(x, y, YOU) && this.iaTurn();
+    this.doStep(x, y, YOU) && this.iaTurn();
   };
 
   iaTurn = () => {
@@ -56,6 +81,6 @@ class Morpion {
     let possibleCuttingMove = this.board.getPossibleCuttingMoves();
     const move = this.ai.play(availabilities, possibleCuttingMove);
 
-    move && this.fillCheckDisplay(move.i, move.j, AI);
+    move && this.doStep(move.i, move.j, AI);
   };
 }

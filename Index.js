@@ -12,8 +12,12 @@ if (appHistory) {
     turn = previousGame.turn;
     finish = previousGame.finish;
     level = previousGame.level;
-    var morpion = new Morpion(level, { board, winner, turn, finish });
+    momento = previousGame.momento;
+    var morpion = new Morpion({ ...previousGame });
   }
 } else {
-  var morpion = new Morpion(HARD);
+  const level = window
+    .prompt("Type desired level: (Easy/Medium/Hard)", "Easy")
+    .toLowerCase();
+  var morpion = new Morpion({ level });
 }

@@ -2,7 +2,7 @@ class Ai {
   constructor(level, game) {
     this.name = AI;
     this.game = game;
-    this.level = level;
+    this.level = level || EASY;
   }
 
   minimax = (board, depth, isMaximizing) => {

@@ -1,12 +1,39 @@
 class View {
-  constructor(game, winner, finish, undoAction, redoAction) {
+  constructor(game) {
+    this.game = game;
     this.winZone = document.getElementById("win");
-    this.showGraphic(game.board.map, finish, winner);
+    this.showGraphic(game.board.map, game.finish, game.winner);
     this.addEvents(game.playerTurn);
     this.addResetBtn("resetBtn", game.reset);
-    this.addUndoRedo(undoAction, redoAction);
+    this.addUndo(game.undoStep);
+    this.showLevel(game.ai.level);
+    this.showTurn(game.turn);
+    this.addLevelBtns();
   }
 
+  showLevel = (level) => {
+    document.getElementById("level_zone").innerHTML = level;
+  };
+
+  showTurn = (turn) => {
+    document.getElementById("turn_zone").innerHTML = turn;
+  };
+
+  addLevelBtns = () => {
+    document.getElementById("level_btn_zone").innerHTML = `
+      <button type="button" class="btn levelBtn" >Easy</button>
+      <button type="button" class="btn levelBtn" >Medium</button>
+      <button type="button" class="btn levelBtn" >Hard</button>
+    `;
+
+    document.querySelectorAll(".levelBtn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        let level = e.target.innerText;
+        this.game.changeLevel(level);
+        this.showLevel(level);
+      });
+    });
+  };
   getZone = (x, y) => {
     return document.getElementById(`cell_${x}${y}`);
   };
@@ -15,13 +42,11 @@ class View {
     document.getElementById(id).addEventListener("click", action);
   };
 
-  addUndoRedo = (undoAction, redoAction) => {
-    document.getElementById("undo_redo_zone").innerHTML = `
+  addUndo = (undoAction) => {
+    document.getElementById("undo_zone").innerHTML = `
       <button id="undoBtn" type="button" class="btn" >Undo</button>
-      <button id="redoBtn" type="button" class="btn" >Redo</button>
     `;
     document.getElementById("undoBtn").addEventListener("click", undoAction);
-    document.getElementById("redoBtn").addEventListener("click", redoAction);
   };
 
   showGraphic = (map, finish, winner) => {
@@ -58,6 +83,7 @@ class View {
 
   endGame = (winner) => {
     this.removeEvents();
+    document.getElementById("undo_zone").style.display = "none";
     if (winner === DRAW) {
       this.winZone.textContent = DrawIndication;
     } else {
