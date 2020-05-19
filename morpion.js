@@ -1,18 +1,34 @@
 class Morpion {
-  constructor(level = EASY, { board } = {}) {
+  constructor(level = EASY, { board, turn, winner, finish } = {}) {
     this.board = new Board(this, board);
-    this.view = new View(this);
+    this.view = new View(this, winner, finish, this.undo, this.redo);
     this.ai = new Ai(level, this);
-    this.turn = 0;
-    this.winner = null;
-
-    this.view.showGraphic(this.board.map);
-    this.view.addEvents(this.playerTurn);
-
+    this.turn = turn || 0;
+    this.winner = winner || null;
+    this.finish = finish || false;
     if (this.ai.level === HARD && board === undefined) {
       this.iaTurn();
     }
   }
+
+  saveGame = () => {
+    localStorage.setItem(
+      GameStatusKey,
+      JSON.stringify({
+        board: this.board.remember(),
+        winner: this.winner,
+        finish: this.finish,
+        turn: this.turn,
+        level: this.ai.level,
+      })
+    );
+  };
+
+  reset = () => {
+    console.log("reset triggered");
+    localStorage.removeItem(GameStatusKey);
+    location.reload();
+  };
 
   fillCheckDisplay = (x, y, player) => {
     if (this.board.fillGrid(x, y, player) === false) {
@@ -23,8 +39,8 @@ class Morpion {
     this.turn += player === EMPTY ? -1 : 1;
     this.winner = this.board.checkWinner();
     this.winner && (this.finish = true);
-    this.finish && this.view.endGame(this.winner);
-    this.view.showGraphic(this.board.map);
+    this.view.showGraphic(this.board.map, this.finish, this.winner);
+    this.saveGame();
     return true;
   };
 
@@ -43,5 +59,3 @@ class Morpion {
     move && this.fillCheckDisplay(move.i, move.j, AI);
   };
 }
-
-const morpion = new Morpion(HARD);

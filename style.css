@@ -89,13 +89,12 @@ table {
   margin-right: auto;
 }
 
-#rejouer {
-  position: fixed;
-  left: 0px;
-  bottom: 0px;
-  text-align: center;
-  width: 100%;
-  display: block;
+#reset_zone,
+#undo_redo_zone {
+  margin: 2rem 0;
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-around;
 }
 
 .btn {

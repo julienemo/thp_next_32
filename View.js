@@ -1,14 +1,30 @@
 class View {
-  constructor(game) {
-    this.game = game;
+  constructor(game, winner, finish, undoAction, redoAction) {
     this.winZone = document.getElementById("win");
+    this.showGraphic(game.board.map, finish, winner);
+    this.addEvents(game.playerTurn);
+    this.addResetBtn("resetBtn", game.reset);
+    this.addUndoRedo(undoAction, redoAction);
   }
 
   getZone = (x, y) => {
     return document.getElementById(`cell_${x}${y}`);
   };
 
-  showGraphic = (map) => {
+  addResetBtn = (id, action) => {
+    document.getElementById(id).addEventListener("click", action);
+  };
+
+  addUndoRedo = (undoAction, redoAction) => {
+    document.getElementById("undo_redo_zone").innerHTML = `
+      <button id="undoBtn" type="button" class="btn" >Undo</button>
+      <button id="redoBtn" type="button" class="btn" >Redo</button>
+    `;
+    document.getElementById("undoBtn").addEventListener("click", undoAction);
+    document.getElementById("redoBtn").addEventListener("click", redoAction);
+  };
+
+  showGraphic = (map, finish, winner) => {
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
         this.getZone(
@@ -17,6 +33,7 @@ class View {
         ).style.backgroundImage = `url(image-morpion/${map[i][j]}.png)`;
       }
     }
+    finish && this.endGame(winner);
   };
 
   addEvents = (action) => {

@@ -1,3 +1,4 @@
+const GameStatusKey = "julieTicTacToePrevious";
 const EMPTY = "Empty";
 const MEDIUM = "Medium";
 const HARD = "Hard";

@@ -10,6 +10,16 @@ class Board {
     }
   }
 
+  remember = () => {
+    let list = [];
+    for (let i = 0; i < 3; i++) {
+      list[i] = [];
+      for (let j = 0; j < 3; j++) {
+        list[i][j] = this.map[i][j];
+      }
+    }
+    return list;
+  };
   getEmptyCases = () => {
     let list = [];
     for (let i = 0; i < 3; i++) {
