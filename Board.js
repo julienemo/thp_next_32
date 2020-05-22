@@ -1,25 +1,20 @@
 class Board {
-  constructor(game, board = BOARD) {
+  constructor(game, history = []) {
     this.game = game;
     this.map = [];
     for (let i = 0; i < 3; i++) {
       this.map[i] = [];
       for (let j = 0; j < 3; j++) {
-        this.map[i][j] = board[i][j];
+        this.map[i][j] = EMPTY;
       }
+    }
+
+    for (let n = 0; n <= history.length - 1; n++) {
+      let el = history[n];
+      this.map[el.x][el.y] = el.player;
     }
   }
 
-  remember = () => {
-    let list = [];
-    for (let i = 0; i < 3; i++) {
-      list[i] = [];
-      for (let j = 0; j < 3; j++) {
-        list[i][j] = this.map[i][j];
-      }
-    }
-    return list;
-  };
   getEmptyCases = () => {
     let list = [];
     for (let i = 0; i < 3; i++) {
@@ -82,6 +77,7 @@ class Board {
     }
     return list;
   };
+
   checkWinner() {
     let winner = null;
     for (let i = 0; i < 3; i++) {

@@ -1,14 +1,24 @@
 class Morpion {
-  constructor({ level, board, turn, winner, finish, momento } = {}) {
-    this.board = new Board(this, board);
+  constructor({ level, history }) {
+    let lastEntry =
+      history == null
+        ? {
+            winner: null,
+            finish: false,
+            length: 0,
+          }
+        : history[history.length - 1];
+    this.board = new Board(this, history);
     this.ai = new Ai(level, this);
-    this.momento = new Momento({ momento });
-    this.turn = turn || 0;
-    this.winner = winner || null;
-    this.finish = finish || false;
+    this.momento = new Momento(history);
+    this.turn = history === undefined ? 0 : history.length;
+    this.winner = lastEntry.winner;
+    this.finish = lastEntry.finish;
     this.view = new View(this);
 
-    if (this.ai.level === HARD && board === undefined) {
+    if (history && history[history.length - 1].player === YOU) {
+      this.iaTurn();
+    } else if (!history && level === HARD) {
       this.iaTurn();
     }
   }
@@ -17,16 +27,8 @@ class Morpion {
     localStorage.setItem(
       GameStatusKey,
       JSON.stringify({
-        board: this.board.remember(),
-        winner: this.winner,
-        finish: this.finish,
-        turn: this.turn,
         level: this.ai.level,
-        momento: {
-          playerHistory: this.momento.playerHistory,
-          AiHistory: this.momento.AiHistory,
-          playerLastStep: this.momento.playerLastStep,
-        },
+        history: this.momento.history.slice(0, this.turn),
       })
     );
   };
@@ -42,19 +44,31 @@ class Morpion {
 
   afterMove = () => {
     this.view.showTurn(this.turn);
-    this.winner = this.board.checkWinner();
-    this.winner && (this.finish = true);
-    this.view.showGraphic(this.board.map, this.finish, this.winner);
+    this.view.showGraphic(this.turn);
     this.saveGame();
   };
 
   undoStep = () => {
-    let playerLast = this.momento.playerLastStep;
-    let AiLast = this.momento.AiLastStep;
-    this.board.fillGrid(playerLast[0], playerLast[1], EMPTY);
-    this.board.fillGrid(AiLast[0], AiLast[1], EMPTY);
+    if (this.turn <= 1) return;
+    let last = this.momento.history[this.turn - 1];
+    let secLast = this.momento.history[this.turn - 2];
+    this.board.fillGrid(last.x, last.y, EMPTY);
+    this.board.fillGrid(secLast.x, secLast.y, EMPTY);
     this.turn -= 2;
-    this.momento.undo();
+    this.winner = this.board.checkWinner();
+    this.winner && (this.finish = true);
+    this.afterMove();
+  };
+
+  redoStep = () => {
+    if (this.turn >= this.momento.history.length) return;
+    let next = this.momento.history[this.turn];
+    let secNext = this.momento.history[this.turn + 1];
+    this.board.fillGrid(next.x, next.y, next.player);
+    this.board.fillGrid(secNext.x, secNext.y, secNext.player);
+    this.turn += 2;
+    this.winner = this.board.checkWinner();
+    this.winner && (this.finish = true);
     this.afterMove();
   };
 
@@ -64,7 +78,9 @@ class Morpion {
       return;
     }
     this.turn += 1;
-    this.momento.addHistory(x, y, player);
+    this.winner = this.board.checkWinner();
+    this.winner && (this.finish = true);
+    this.momento.add(this.turn, x, y, player, this.winner, this.finish);
     this.afterMove();
     return true;
   };
@@ -80,7 +96,6 @@ class Morpion {
     let availabilities = this.board.getEmptyCases();
     let possibleCuttingMove = this.board.getPossibleCuttingMoves();
     const move = this.ai.play(availabilities, possibleCuttingMove);
-
     move && this.doStep(move.i, move.j, AI);
   };
 }

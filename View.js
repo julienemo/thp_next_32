@@ -2,10 +2,9 @@ class View {
   constructor(game) {
     this.game = game;
     this.winZone = document.getElementById("win");
-    this.showGraphic(game.board.map, game.finish, game.winner);
-    this.addEvents(game.playerTurn);
+    this.showGraphic(game.turn);
     this.addResetBtn("resetBtn", game.reset);
-    this.addUndo(game.undoStep);
+    this.addUndoRedo(game.undoStep, game.redoStep);
     this.showLevel(game.ai.level);
     this.showTurn(game.turn);
     this.addLevelBtns();
@@ -34,6 +33,7 @@ class View {
       });
     });
   };
+
   getZone = (x, y) => {
     return document.getElementById(`cell_${x}${y}`);
   };
@@ -42,23 +42,41 @@ class View {
     document.getElementById(id).addEventListener("click", action);
   };
 
-  addUndo = (undoAction) => {
+  addUndoRedo = (undoAction, redoAction) => {
     document.getElementById("undo_zone").innerHTML = `
       <button id="undoBtn" type="button" class="btn" >Undo</button>
+      <button id="redoBtn" type="button" class="btn" >Redo</button>
+
     `;
     document.getElementById("undoBtn").addEventListener("click", undoAction);
+    document.getElementById("redoBtn").addEventListener("click", redoAction);
   };
 
-  showGraphic = (map, finish, winner) => {
+  showGraphic = (currentStep) => {
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
         this.getZone(
           i,
           j
-        ).style.backgroundImage = `url(image-morpion/${map[i][j]}.png)`;
+        ).style.backgroundImage = `url(image-morpion/Empty.png)`;
       }
     }
-    finish && this.endGame(winner);
+    if (this.game.momento.history.length > 0) {
+      let shown = this.game.momento.history.slice(0, currentStep);
+      let shownLength = shown.length;
+      let lastSnapShot = shown[shownLength - 1] || {
+        finish: false,
+        winner: null,
+      };
+      for (let n = 0; n < shownLength; n += 1) {
+        this.getZone(
+          shown[n].x,
+          shown[n].y
+        ).style.backgroundImage = `url(image-morpion/${shown[n].player}.png)`;
+      }
+      this.endGame(lastSnapShot.winner);
+    }
+    this.addEvents(this.game.playerTurn);
   };
 
   addEvents = (action) => {
@@ -83,8 +101,12 @@ class View {
 
   endGame = (winner) => {
     this.removeEvents();
-    document.getElementById("undo_zone").style.display = "none";
-    if (winner === DRAW) {
+    if (winner !== null) {
+      document.getElementById("undo_zone").style.display = "none";
+    }
+    if (winner === null) {
+      this.winZone.textContent = "";
+    } else if (winner === DRAW) {
       this.winZone.textContent = DrawIndication;
     } else {
       this.winZone.textContent = `${winner} won!`;

@@ -1,31 +1,15 @@
 class Momento {
-  constructor({ AiHistory, playerHistory, playerLastStep }) {
-    this.AiHistory = AiHistory || [];
-    this.playerHistory = playerHistory || [];
-    this.playerLastStep = playerLastStep || null;
-    this.playerLastStep = null;
+  constructor(history) {
+    this.history = history || [];
   }
 
-  addHistory = (x, y, player) => {
-    if (player === YOU) {
-      this.playerHistory.push([x, y]);
-    }
-    if (player === AI) {
-      this.AiHistory.push([x, y]);
-    }
-    this.updateLast();
-  };
-
-  undo = () => {
-    this.playerHistory.pop();
-    this.AiHistory.pop();
-    this.updateLast();
-  };
-
-  updateLast = () => {
-    let playerHistoryLength = this.playerHistory.length;
-    this.playerLastStep = this.playerHistory[playerHistoryLength - 1];
-    let AiHistoryLength = this.AiHistory.length;
-    this.AiLastStep = this.AiHistory[AiHistoryLength - 1];
+  add = (turn, x, y, player, winner, finish) => {
+    this.history[turn - 1] = {
+      x,
+      y,
+      player,
+      winner,
+      finish,
+    };
   };
 }
